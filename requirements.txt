@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+streamlit
+python-dotenv
+imagekitio[aiohttp]
+aiosqlite
+fastapi-offline
+python-multipart
+fastapi_users
