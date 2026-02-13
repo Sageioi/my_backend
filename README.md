@@ -1,7 +1,7 @@
-🚀 FastAPI Backend Learning Project
+FastAPI Backend Learning Project
 This is a backend API built with FastAPI, following the Tech With Tim tutorials. This project serves as a hands-on exploration of building modern, high-performance web APIs with Python.
 
-🛠 Features
+Features
 Automatic Documentation: Interactive API docs via Swagger UI and ReDoc.
 
 Type Safety: Data validation using Pydantic.
@@ -10,7 +10,9 @@ Asynchronous Support: Built to handle async/await for high performance.
 
 RESTful Endpoints: Basic CRUD (Create, Read, Update, Delete) functionality.
 
-🏗 Project Structure
+Database
+Sqlite is used for learning while SqlALchemy serves as the ORM Wrapper
+Project Structure
 Plaintext
 
 .
@@ -18,7 +20,7 @@ Plaintext
 ├── requirements.txt   # Project dependencies
 ├── .gitignore         # Files excluded from GitHub
 └── README.md          # Project documentation
-⚙️ Getting Started
+Getting Started
 1. Clone the repository
 Bash
 

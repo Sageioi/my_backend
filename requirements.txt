@@ -8,3 +8,4 @@ aiosqlite
 fastapi-offline
 python-multipart
 fastapi_users
+fastapi-users-db-sqlalchemy

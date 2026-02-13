@@ -4,7 +4,7 @@ from fastapi import Depends, Request, FastAPI
 
 from fastapi_users import FastAPIUsers,BaseUserManager, UUIDIDMixin, models
 from fastapi_users.authentication import (AuthenticationBackend, JWTStrategy, BearerTransport)
-from fastapi_users.db import SQLAlchemyUserDatabase, SQLAlchemyBaseUserTableUUID
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase, SQLAlchemyBaseUserTableUUID
 from sqlalchemy.orm import DeclarativeBase, relationship
 from app.models import User, get_user_db
 
@@ -30,6 +30,16 @@ class UserManager(UUIDIDMixin, BaseUserManager[User,uuid.UUID]):
 async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
     return UserManager(user_db)
 
-bearer_transport = BearerTransport(tokenUrl="auth/jwt/token")
+bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 def get_jwt_strategy():
     return JWTStrategy(secret=SECRET,lifetime_seconds=3600)
+
+
+auth_backend  = AuthenticationBackend(
+    name="jwt",
+    transport=bearer_transport,
+    get_strategy = get_jwt_strategy
+)
+
+fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager,[auth_backend])
+current_active_user = fastapi_users.current_user(active=True)

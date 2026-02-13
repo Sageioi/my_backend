@@ -1,19 +1,20 @@
 from datetime import datetime
-from fastapi import FastAPI, APIRouter, File, UploadFile, Form, Depends, HTTPException
+from fastapi import  APIRouter, File, UploadFile, Form, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas import PostCreate, PostResponse
 from app.models import Post,get_async_session
 from app.images import imagekit
+from app.models import User
 import shutil
 import os
 import uuid
 import tempfile
+from app.users import  current_active_user
 
 routes = APIRouter()
 
 @routes.post("/create_post")
-async def create_post(file: UploadFile = File(...),caption: str = Form(""), session: AsyncSession = Depends(get_async_session)):
+async def create_post(file: UploadFile = File(...), user: User = Depends(current_active_user),caption: str = Form(""), session: AsyncSession = Depends(get_async_session)):
     temp_file_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
@@ -30,6 +31,7 @@ async def create_post(file: UploadFile = File(...),caption: str = Form(""), sess
 
         if upload_result and hasattr(upload_result, 'url'):
             post = Post(
+                user_id=user.id,
                 caption=caption,
                 url=upload_result.url,
                 file_type="video" if "video" in file.content_type else "image",
@@ -51,27 +53,37 @@ async def create_post(file: UploadFile = File(...),caption: str = Form(""), sess
             os.unlink(temp_file_path)
         file.file.close()
 @routes.get("/get_feed")
-async def get_feed(session: AsyncSession = Depends(get_async_session)):
+async def get_feed(session: AsyncSession = Depends(get_async_session), user: User = Depends(current_active_user)):
     result = await session.execute(select(Post).order_by(Post.created_at.desc()))
     post =  [row[0] for row in result.all()]
+    result = await session.execute(select(User))
+    users = [row[0] for row in result.all()]
+    users_dict = {u.id: u.email for u in users}
     post_data = []
     for post in post:
         post_data.append({
             "id": post.id,
+            "user_id":str(post.user_id),
             "caption": post.caption,
             "url": post.url,
             "file_name": post.file_name,
             "file_type": post.file_type,
             "created_at": post.created_at.isoformat(),
-        })
+            "is_owner": post.user_id == user.id,
+            "email": users_dict.get(post.user_id, "Unknown User"),      
+            })
     return post_data
 
 @routes.delete("/delete_images")
-async def delete_images(post_id ,session: AsyncSession = Depends(get_async_session)):
+async def delete_images(post_id ,session: AsyncSession = Depends(get_async_session), user: User = Depends(current_active_user)):
     try:
         post_id = uuid.UUID(post_id)
         result = await session.execute(select(Post).where(Post.id == post_id))
         post = result.scalars().first()
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+        if post.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to delete this post")
         await session.delete(post)
         await session.commit()
 
