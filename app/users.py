@@ -7,9 +7,10 @@ from fastapi_users.authentication import (AuthenticationBackend, JWTStrategy, Be
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase, SQLAlchemyBaseUserTableUUID
 from sqlalchemy.orm import DeclarativeBase, relationship
 from app.models import User, get_user_db
+import os
 
 
-SECRET = "User_password1234"
+SECRET =  os.getenv("APP_SECRET_KEY")
 
 class UserManager(UUIDIDMixin, BaseUserManager[User,uuid.UUID]):
     reset_password_token_secret = SECRET
